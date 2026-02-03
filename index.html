@@ -1078,6 +1078,9 @@ ${document.getElementById('editJobCity').value},
 ${document.getElementById('editJobZip').value}`;
 
     const time = document.getElementById('editJobTime').value;
+	const durationHours = document.getElementById('editJobDuration').value || "0";
+    const totalManHours = document.getElementById('editJobManHours').value || "0";
+    const payoutAmount = document.getElementById('payoutValue').value || "0";
    const scheduledDate = window.allJobs
     .find(j => j.job_id === jobId)
     ?.scheduled_start
@@ -1134,6 +1137,9 @@ console.log("ASSIGNED STAFF", assignedStaff);
     scheduled_date: scheduledDate,
     service_type: serviceType,
     job_notes: jobNotes,
+		duration_hours: durationHours,
+        total_man_hours: totalManHours,
+        payout_amount: payoutAmount,
     cleaners: assignedStaff.map(c => ({
         name: c.name,
         email: c.email,
@@ -1392,6 +1398,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
 
 
 
