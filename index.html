@@ -542,6 +542,19 @@ window.loadData = async function loadData() {
         supabase.from('profiles').select('id,email')
     ]);
 
+	// --- BUILD CANONICAL STAFF MAP (ID → NAME / EMAIL) ---
+window.staffById = {};
+
+(usersRes.data || []).forEach(u => {
+    window.staffById[u.id] = {
+        id: u.id,
+        name: u.full_name || u.email, // fallback if no name column
+        email: u.email
+    };
+});
+
+console.log("STAFF BY ID:", window.staffById);
+
     // --- BUILD ID → EMAIL MAP (SOURCE OF TRUTH) ---
     window.profileById = {};
     (usersRes.data || []).forEach(p => {
@@ -568,6 +581,9 @@ if (assignRes.error) console.error("ASSIGN ERROR", assignRes.error);
     window.allAssignments = assignRes.data || []; // NEW: Store assignments globally
     
     processStaff(window.allShifts);
+populateAssignCleanerSelect();
+refreshUI();
+
     populateAssignCleanerSelect(); 
     refreshUI();
 }
@@ -589,45 +605,45 @@ if (assignRes.error) console.error("ASSIGN ERROR", assignRes.error);
     // 1. Get unique user_ids from slots
     const userIds = [...new Set(slots.map(s => s.user_id).filter(Boolean))];
 
-    userIds.forEach(uid => {
-        const email = window.profileById[uid];
-        if (!email) {
-            console.warn("Missing email for user_id:", uid);
-            return;
-        }
+  userIds.forEach(uid => {
+    const staff = window.staffById[uid];
+    if (!staff) {
+        console.warn("Missing staff profile for:", uid);
+        return;
+    }
 
-        // Find a display name from any slot
-        const slot = slots.find(s => s.user_id === uid);
-        const name = slot?.user_name || email;
+    const name = staff.name;
+    const email = staff.email;
 
-        const color = colors[colorIdx % colors.length];
-        const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    const color = colors[colorIdx % colors.length];
+    const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
-        staffMap[name] = {
-            id: uid,
-            email,
-            color,
-            initials
-        };
+    staffMap[name] = {
+        id: uid,
+        email,
+        color,
+        initials
+    };
 
-        colorIdx++;
+    colorIdx++;
 
-        filterSelect.add(new Option(name, name));
-        modalSelect.add(new Option(name, name));
+    filterSelect.add(new Option(name, name));
+    modalSelect.add(new Option(name, name));
 
-        const item = document.createElement('div');
-        item.className = 'staff-item';
-        item.innerHTML = `
-            <div class="staff-avatar" style="background:${color}">${initials}</div>
-            <span class="staff-name">${name}</span>
-            <div class="staff-status"></div>
-        `;
-        item.onclick = () => {
-            filterSelect.value = name;
-            refreshUI();
-        };
-        listContainer.appendChild(item);
-    });
+    const item = document.createElement('div');
+    item.className = 'staff-item';
+    item.innerHTML = `
+        <div class="staff-avatar" style="background:${color}">${initials}</div>
+        <span class="staff-name">${name}</span>
+        <div class="staff-status"></div>
+    `;
+    item.onclick = () => {
+        filterSelect.value = name;
+        refreshUI();
+    };
+
+    listContainer.appendChild(item);
+});
 }
 
 
@@ -997,7 +1013,9 @@ if (priceEl) {
 
     if (isAssigned) {
         const first = assignments[0];
-        const name = Object.keys(window.staffMap).find(n => window.staffMap[n].id === first.cleaner_id);
+        const staff = window.staffById[first.cleaner_id];
+select.value = staff ? staff.name : "";
+
         select.value = name || "";
         document.getElementById('payoutType').value = first.payout_type || 'PERCENT';
         document.getElementById('payoutValue').value = first.payout_value || '';
@@ -1203,13 +1221,16 @@ function populateAssignCleanerSelect() {
 
     select.innerHTML = '<option value="">-- Unassigned (Available) --</option>';
 
-    Object.keys(window.staffMap).forEach(name => {
+    Object.values(window.staffById || {}).forEach(staff => {
         const opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name;
+        opt.value = staff.name;
+        opt.textContent = staff.name;
         select.appendChild(opt);
     });
+
+    console.log("ASSIGN DROPDOWN POPULATED");
 }
+
 
 </script>
 
@@ -1334,6 +1355,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
 
 
 
