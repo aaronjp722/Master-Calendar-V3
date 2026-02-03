@@ -1007,21 +1007,22 @@ if (priceEl) {
     badge.style.color = 'black';
 
    // Ensure the list is populated first
-    populateAssignCleanerSelect();
+populateAssignCleanerSelect(); 
 
     const select = document.getElementById('assignCleanerSelect');
     if (isAssigned) {
-        const first = assignments[0];
-        // Use the ID to find the staff name in your map
-        const staff = window.staffById[first.cleaner_id];
+        const assignment = assignments[0];
         
-        // Match the dropdown selection to the assigned name
-        if (staff && staff.name) {
-            select.value = staff.name;
+        // Find the name by looking through all our staff data for the matching ID
+        const staffEntry = Object.entries(window.staffMap || {}).find(([name, data]) => data.id === assignment.cleaner_id);
+        
+        if (staffEntry) {
+            const cleanerName = staffEntry[0]; // This is the string "Name"
+            select.value = cleanerName;
         }
         
-        document.getElementById('payoutType').value = first.payout_type || 'PERCENT';
-        document.getElementById('payoutValue').value = first.payout_value || '';
+        document.getElementById('payoutType').value = assignment.payout_type || 'PERCENT';
+        document.getElementById('payoutValue').value = assignment.payout_value || '';
     } else {
         select.value = "";
     }
@@ -1223,14 +1224,15 @@ function populateAssignCleanerSelect() {
     const select = document.getElementById('assignCleanerSelect');
     if (!select) return;
 
-    // Reset and add the placeholder
     select.innerHTML = '<option value="">-- Select Cleaner --</option>';
 
-    // Loop through staff records and add names to the dropdown
-    Object.values(window.staffById || {}).forEach(staff => {
+    // Use the names already verified in your sidebar
+    const names = Object.keys(window.staffMap || {});
+    
+    names.forEach(name => {
         const opt = document.createElement('option');
-        opt.value = staff.name;
-        opt.textContent = staff.name;
+        opt.value = name;
+        opt.textContent = name;
         select.appendChild(opt);
     });
 }
@@ -1359,6 +1361,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init --->
+
 
 
 
