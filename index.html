@@ -539,21 +539,33 @@ window.loadData = async function loadData() {
         supabase.from('cleaner_availability_time_slots').select('*'),
         supabase.from('jobs').select('*'),
         supabase.from('job_assignments').select('*'),
-        supabase.from('profiles').select('id,email')
+        supabase
+  .from('profiles')
+  .select('id,email,name,role')
+  .eq('role', 'cleaner')
+
     ]);
 
-	// --- BUILD CANONICAL STAFF MAP (ID → NAME / EMAIL) ---
+	// --- CANONICAL STAFF MAP (FROM PROFILES) ---
+window.staffMap = {};
 window.staffById = {};
 
 (usersRes.data || []).forEach(u => {
-    window.staffById[u.id] = {
+    const name = u.name || u.email;
+
+    window.staffMap[name] = {
         id: u.id,
-        name: u.full_name || u.email, // fallback if no name column
-        email: u.email
+        email: u.email,
+        name,
+        initials: name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase(),
+        color: '#22c55e'
     };
+
+    window.staffById[u.id] = window.staffMap[name];
 });
 
-console.log("STAFF BY ID:", window.staffById);
+console.log("STAFF MAP READY:", window.staffMap);
+
 
     // --- BUILD ID → EMAIL MAP (SOURCE OF TRUTH) ---
     window.profileById = {};
@@ -580,18 +592,13 @@ if (assignRes.error) console.error("ASSIGN ERROR", assignRes.error);
 
     window.allAssignments = assignRes.data || []; // NEW: Store assignments globally
     
-    processStaff(window.allShifts);
+    processStaff();
 populateAssignCleanerSelect();
 refreshUI();
 
-    populateAssignCleanerSelect(); 
-    refreshUI();
 }
 
-        function processStaff(slots) {
-    window.staffMap = {};
-    const staffMap = window.staffMap;
-
+       function processStaff() {
     const filterSelect = document.getElementById('filterCleaner');
     const modalSelect = document.getElementById('modalCleaner');
     const listContainer = document.getElementById('staffListContainer');
@@ -600,51 +607,35 @@ refreshUI();
     modalSelect.innerHTML = '<option value="" disabled selected>Select Staff...</option>';
     listContainer.innerHTML = '';
 
-    let colorIdx = 0;
+    let idx = 0;
 
-    // 1. Get unique user_ids from slots
-    const userIds = [...new Set(slots.map(s => s.user_id).filter(Boolean))];
+    Object.values(window.staffMap).forEach(staff => {
+        const color = colors[idx % colors.length];
+        staff.color = color;
+        idx++;
 
-  userIds.forEach(uid => {
-    const staff = window.staffById[uid];
-    if (!staff) {
-        console.warn("Missing staff profile for:", uid);
-        return;
-    }
+        filterSelect.add(new Option(staff.name, staff.name));
+        modalSelect.add(new Option(staff.name, staff.name));
 
-    const name = staff.name;
-    const email = staff.email;
+        const item = document.createElement('div');
+        item.className = 'staff-item';
+        item.innerHTML = `
+            <div class="staff-avatar" style="background:${color}">
+                ${staff.initials}
+            </div>
+            <span class="staff-name">${staff.name}</span>
+            <div class="staff-status"></div>
+        `;
 
-    const color = colors[colorIdx % colors.length];
-    const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+        item.onclick = () => {
+            filterSelect.value = staff.name;
+            refreshUI();
+        };
 
-    staffMap[name] = {
-        id: uid,
-        email,
-        color,
-        initials
-    };
-
-    colorIdx++;
-
-    filterSelect.add(new Option(name, name));
-    modalSelect.add(new Option(name, name));
-
-    const item = document.createElement('div');
-    item.className = 'staff-item';
-    item.innerHTML = `
-        <div class="staff-avatar" style="background:${color}">${initials}</div>
-        <span class="staff-name">${name}</span>
-        <div class="staff-status"></div>
-    `;
-    item.onclick = () => {
-        filterSelect.value = name;
-        refreshUI();
-    };
-
-    listContainer.appendChild(item);
-});
+        listContainer.appendChild(item);
+    });
 }
+
 
 
         // --- RENDERING ---
@@ -1232,19 +1223,14 @@ function populateAssignCleanerSelect() {
 
     select.innerHTML = '<option value="">-- Select Cleaner --</option>';
 
-    // Creative Solution: Grab names directly from the sidebar DOM
-    const sidebarNames = Array.from(document.querySelectorAll('.staff-name'))
-                              .map(el => el.innerText.trim());
-
-    sidebarNames.forEach(name => {
-        if (name) {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name;
-            select.appendChild(opt);
-        }
+    Object.keys(window.staffMap).forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        select.appendChild(opt);
     });
 }
+
 
 
 </script>
@@ -1370,6 +1356,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init --->
+
 
 
 
