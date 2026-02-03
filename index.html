@@ -1016,7 +1016,7 @@ if (priceEl) {
         const staff = window.staffById[first.cleaner_id];
 select.value = staff ? staff.name : "";
 
-        select.value = name || "";
+        
         document.getElementById('payoutType').value = first.payout_type || 'PERCENT';
         document.getElementById('payoutValue').value = first.payout_value || '';
     } else {
@@ -1025,6 +1025,8 @@ select.value = staff ? staff.name : "";
     }
 
     // This part was missing and is why the page won't load
+	populateAssignCleanerSelect();
+
     document.getElementById('jobAssignmentModal').style.display = 'flex';
 }
 
@@ -1355,6 +1357,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init --->
+
 
 
 
