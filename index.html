@@ -789,7 +789,7 @@ pill.style.zIndex = "10";
 
             pill.onclick = (e) => {
                 e.stopPropagation();
-                openJobAssignmentModal(job);
+               
             };
 			 pill.style.display = "block";
 pill.style.opacity = "1";
@@ -1000,29 +1000,33 @@ if (priceEl) {
    // Ensure the list is populated first
 populateAssignCleanerSelect(); 
 
-    const select = document.getElementById('assignCleanerSelect');
-    if (isAssigned) {
-        const assignment = assignments[0];
-        
-        // Strategy: Try to find the name in the staffMap using the ID
-        let foundName = "";
-        for (const [name, data] of Object.entries(window.staffMap || {})) {
-            if (data.id === assignment.cleaner_id) {
-                foundName = name;
-                break;
-            }
-        }
+    const container = document.getElementById('cleanerAssignmentContainer');
+container.innerHTML = ''; // reset rows
 
-        // If found, set it. This works even if the dropdown just finished loading.
-        if (foundName) {
-            select.value = foundName;
-        }
-        
+if (assignments.length === 0) {
+    addCleanerRow(); // empty row
+    return;
+}
+
+assignments.forEach((assignment, index) => {
+    const row = addCleanerRow();
+
+    // find cleaner name from ID
+    const cleanerName = Object.keys(window.staffMap).find(
+        name => window.staffMap[name].id === assignment.cleaner_id
+    );
+
+    if (cleanerName) {
+        row.querySelector('select').value = cleanerName;
+    }
+
+    // payout (only set once)
+    if (index === 0) {
         document.getElementById('payoutType').value = assignment.payout_type || 'PERCENT';
         document.getElementById('payoutValue').value = assignment.payout_value || '';
-    } else {
-        select.value = "";
     }
+});
+
 
     // This part was missing and is why the page won't load
 	populateAssignCleanerSelect();
@@ -1231,6 +1235,36 @@ function populateAssignCleanerSelect() {
     });
 }
 
+function addCleanerRow() {
+    const container = document.getElementById('cleanerAssignmentContainer');
+    if (!container) return null;
+
+    const row = document.createElement('div');
+    row.className = 'cleaner-row';
+    row.style.cssText = "display:flex; gap:10px; align-items:center;";
+
+    const select = document.createElement('select');
+    select.className = 'form-input cleaner-select';
+    select.style.flex = '1';
+    select.innerHTML = '<option value="">-- Select Cleaner --</option>';
+
+    Object.keys(window.staffMap).forEach(name => {
+        select.add(new Option(name, name));
+    });
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'nav-icon-btn';
+    removeBtn.style.width = '32px';
+    removeBtn.style.color = 'var(--danger)';
+    removeBtn.innerText = '✕';
+    removeBtn.onclick = () => row.remove();
+
+    row.appendChild(select);
+    row.appendChild(removeBtn);
+    container.appendChild(row);
+
+    return row;
+}
 
 
 </script>
@@ -1356,6 +1390,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
 
 
 
