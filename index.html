@@ -1018,6 +1018,47 @@ function openJobAssignmentModal(job) {
             }
         }
         if (firstName) mainSelect.value = firstName;
+		// --- Loop to add rows for any extra cleaners (Cleaner #2, #3, etc.) ---
+        assignments.slice(1).forEach(assignment => {
+            // 1. Find the name for this specific assignment ID
+            let foundName = "";
+            for (const [name, data] of Object.entries(window.staffMap || {})) {
+                if (data.id === assignment.cleaner_id) {
+                    foundName = name;
+                    break;
+                }
+            }
+            
+            // 2. Add the row to the UI
+            const container = document.getElementById('cleanerAssignmentContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'cleaner-row';
+            newRow.style.cssText = "display: flex; gap: 10px; align-items: center; margin-top: 10px;";
+            
+            const newSelect = document.createElement('select');
+            newSelect.className = 'form-input cleaner-select';
+            newSelect.style.cssText = "flex: 1; border-color: var(--primary);";
+            newSelect.innerHTML = '<option value="">-- Select Cleaner --</option>';
+            
+            Object.keys(window.staffMap).forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                newSelect.appendChild(opt);
+            });
+
+            if (foundName) newSelect.value = foundName;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.innerHTML = '✕';
+            removeBtn.className = 'nav-icon-btn';
+            removeBtn.style.cssText = "width:32px; height:32px; color:var(--danger); border-color:var(--danger); display:flex; align-items:center; justify-content:center;";
+            removeBtn.onclick = () => newRow.remove();
+
+            newRow.appendChild(newSelect);
+            newRow.appendChild(removeBtn);
+            container.appendChild(newRow);
+        });
 
         // --- SECONDARY CLEANERS (If any) ---
         // If there are more assignments, we trigger the "Add" button logic to create rows
@@ -1198,7 +1239,7 @@ async function saveJobAssignment() {
             zip_code: document.getElementById('editJobZip').value,
             notes: document.getElementById('editJobNotes').value,
 duration_hours: parseFloat(document.getElementById('editJobDuration').value) || 0,
-            total_man_hours: parseFloat(document.getElementById('editJobManHours').value) || 0,
+			total_man_hours: parseFloat(document.getElementById('editJobManHours').value) || 0,
             scheduled_start: originalJob.scheduled_start.split('T')[0] + 'T' + document.getElementById('editJobTime').value + ':00'
         })
         .eq('job_id', jobId);
@@ -1398,6 +1439,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
 
 
 
