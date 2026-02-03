@@ -1013,12 +1013,18 @@ populateAssignCleanerSelect();
     if (isAssigned) {
         const assignment = assignments[0];
         
-        // Find the name by looking through all our staff data for the matching ID
-        const staffEntry = Object.entries(window.staffMap || {}).find(([name, data]) => data.id === assignment.cleaner_id);
-        
-        if (staffEntry) {
-            const cleanerName = staffEntry[0]; // This is the string "Name"
-            select.value = cleanerName;
+        // Strategy: Try to find the name in the staffMap using the ID
+        let foundName = "";
+        for (const [name, data] of Object.entries(window.staffMap || {})) {
+            if (data.id === assignment.cleaner_id) {
+                foundName = name;
+                break;
+            }
+        }
+
+        // If found, set it. This works even if the dropdown just finished loading.
+        if (foundName) {
+            select.value = foundName;
         }
         
         document.getElementById('payoutType').value = assignment.payout_type || 'PERCENT';
@@ -1226,14 +1232,17 @@ function populateAssignCleanerSelect() {
 
     select.innerHTML = '<option value="">-- Select Cleaner --</option>';
 
-    // Use the names already verified in your sidebar
-    const names = Object.keys(window.staffMap || {});
-    
-    names.forEach(name => {
-        const opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name;
-        select.appendChild(opt);
+    // Creative Solution: Grab names directly from the sidebar DOM
+    const sidebarNames = Array.from(document.querySelectorAll('.staff-name'))
+                              .map(el => el.innerText.trim());
+
+    sidebarNames.forEach(name => {
+        if (name) {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name;
+            select.appendChild(opt);
+        }
     });
 }
 
@@ -1361,6 +1370,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init --->
+
 
 
 
