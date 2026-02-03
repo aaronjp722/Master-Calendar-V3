@@ -950,19 +950,26 @@ function closeDetailModal() {
 
 // --- JOB ASSIGNMENT & CONFLICT LOGIC ---
 function openJobAssignmentModal(job) {
-	const modal = document.getElementById('jobAssignmentModal');
-const assignJobIdEl = document.getElementById('assignJobId');
+    const modal = document.getElementById('jobAssignmentModal');
+    const assignJobIdEl = document.getElementById('assignJobId');
 
-if (!modal || !assignJobIdEl) {
-    console.error("Job Assignment Modal DOM not ready");
-    return;
-}
+    if (!modal || !assignJobIdEl) {
+        console.error("Job Assignment Modal DOM not ready");
+        return;
+    }
 
-    // Fill Primary Hidden ID
+    // 1. POPULATE OPTIONS FIRST (So we can select one later)
+    populateAssignCleanerSelect();
+
+    // 2. Clear any extra rows from previous opens (Reset to just one row)
+    const container = document.getElementById('cleanerAssignmentContainer');
+    // Keep the first row (index 0), remove the rest
+    while (container.children.length > 1) {
+        container.removeChild(container.lastChild);
+    }
+
+    // 3. Fill Job Data
     assignJobIdEl.value = job.job_id;
-
-
-    // Set Editable Fields
     document.getElementById('editJobFirstName').value = job.first_name || '';
     document.getElementById('editJobLastName').value = job.last_name || '';
     document.getElementById('editJobArea').value = job.service_area || 'Billings';
@@ -970,64 +977,93 @@ if (!modal || !assignJobIdEl) {
     document.getElementById('editJobPhone').value = job.phone || '';
     document.getElementById('editJobAddress').value = job.address || '';
     document.getElementById('editJobCity').value = job.city || '';
-document.getElementById('editJobZip').value = job.zip_code || '';
+    document.getElementById('editJobZip').value = job.zip_code || '';
     document.getElementById('editJobNotes').value = job.notes || '';
-document.getElementById('editJobDuration').value = job.duration_hours || '';
+    document.getElementById('editJobDuration').value = job.duration_hours || '';
     document.getElementById('editJobManHours').value = job.total_man_hours || '';
-    
-    // This is the line you found with Ctrl+F
-    const priceEl = document.getElementById('assignJobPrice');
-if (priceEl) {
-    priceEl.innerText = job.price ? `$${job.price}` : '$0.00';
-}
 
+    const priceEl = document.getElementById('assignJobPrice');
+    if (priceEl) priceEl.innerText = job.price ? `$${job.price}` : '$0.00';
 
     if (job.scheduled_start) {
-        const timeValue = job.scheduled_start.split('T')[1].substring(0, 5);
-        document.getElementById('editJobTime').value = timeValue;
-
+        document.getElementById('editJobTime').value = job.scheduled_start.split('T')[1].substring(0, 5);
     }
 
-    // Set Status Badge
-    const badge = document.getElementById('jobStatusBadge');
+    // 4. Handle Assignments
     const assignments = (window.allAssignments || []).filter(a => a.job_id === job.job_id);
     const isAssigned = assignments.length > 0;
 
+    // Badge Logic
+    const badge = document.getElementById('jobStatusBadge');
     badge.innerText = isAssigned ? 'ASSIGNED' : 'UNASSIGNED';
     badge.style.background = isAssigned ? 'var(--primary)' : 'var(--danger)';
     badge.style.color = 'black';
 
-   // Ensure the list is populated first
-populateAssignCleanerSelect(); 
+    // Payout Logic
+    document.getElementById('payoutType').value = (isAssigned && assignments[0].payout_type) ? assignments[0].payout_type : 'PERCENT';
+    document.getElementById('payoutValue').value = (isAssigned && assignments[0].payout_value) ? assignments[0].payout_value : '';
 
-    const select = document.getElementById('assignCleanerSelect');
+    // 5. Set the Cleaner(s)
+    const mainSelect = document.getElementById('assignCleanerSelect');
+    
     if (isAssigned) {
-        const assignment = assignments[0];
-        
-        // Strategy: Try to find the name in the staffMap using the ID
-        let foundName = "";
+        // --- PRIMARY CLEANER (First Dropdown) ---
+        const firstAssignment = assignments[0];
+        let firstName = "";
+        // Find name by ID
         for (const [name, data] of Object.entries(window.staffMap || {})) {
-            if (data.id === assignment.cleaner_id) {
-                foundName = name;
+            if (data.id === firstAssignment.cleaner_id) {
+                firstName = name;
                 break;
             }
         }
+        if (firstName) mainSelect.value = firstName;
 
-        // If found, set it. This works even if the dropdown just finished loading.
-        if (foundName) {
-            select.value = foundName;
-        }
-        
-        document.getElementById('payoutType').value = assignment.payout_type || 'PERCENT';
-        document.getElementById('payoutValue').value = assignment.payout_value || '';
+        // --- SECONDARY CLEANERS (If any) ---
+        // If there are more assignments, we trigger the "Add" button logic to create rows
+        assignments.slice(1).forEach(assignment => {
+            // Create the UI row manually to ensure it populates
+            const newRow = document.createElement('div');
+            newRow.className = 'cleaner-row';
+            newRow.style.cssText = "display: flex; gap: 10px; align-items: center; margin-top: 10px;";
+            
+            const newSelect = document.createElement('select');
+            newSelect.className = 'form-input cleaner-select';
+            newSelect.style.cssText = "flex: 1; border-color: var(--primary);";
+            newSelect.innerHTML = '<option value="">-- Select Cleaner --</option>';
+            
+            let foundName = "";
+            Object.keys(window.staffMap).forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                newSelect.appendChild(opt);
+                // Check if this name matches the assignment ID
+                if (window.staffMap[name].id === assignment.cleaner_id) {
+                    foundName = name;
+                }
+            });
+
+            if (foundName) newSelect.value = foundName;
+
+            // Remove button
+            const removeBtn = document.createElement('button');
+            removeBtn.innerHTML = '✕';
+            removeBtn.className = 'nav-icon-btn';
+            removeBtn.style.cssText = "width:32px; height:32px; color:var(--danger); border-color:var(--danger); display:flex; align-items:center; justify-content:center;";
+            removeBtn.onclick = () => newRow.remove();
+
+            newRow.appendChild(newSelect);
+            newRow.appendChild(removeBtn);
+            container.appendChild(newRow);
+        });
+
     } else {
-        select.value = "";
+        mainSelect.value = "";
     }
 
-    // This part was missing and is why the page won't load
-	populateAssignCleanerSelect();
-
-    document.getElementById('jobAssignmentModal').style.display = 'flex';
+    // Show Modal
+    modal.style.display = 'flex';
 }
 
 
@@ -1356,6 +1392,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
 
 
 
