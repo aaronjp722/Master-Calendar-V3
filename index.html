@@ -1207,6 +1207,45 @@ console.log("ASSIGNED STAFF", assignedStaff);
     }
 }
 
+async function completeJob() {
+    const jobId = document.getElementById('assignJobId').value;
+    const firstName = document.getElementById('editJobFirstName').value;
+    const lastName = document.getElementById('editJobLastName').value;
+    const email = document.getElementById('editJobEmail').value;
+    const phone = document.getElementById('editJobPhone').value;
+
+    if (!email && !phone) {
+        alert("Customer needs an email or phone number to send a review request.");
+        return;
+    }
+
+    const payload = {
+        job_id: jobId,
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        phone: phone,
+        timestamp: new Date().toISOString()
+    };
+
+    try {
+        const response = await fetch("https://hook.us1.make.com/x6r5ybeybysjgklu6a9h68w4f45mhvpw", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            alert("Job marked complete! Review request sent.");
+        } else {
+            alert("Failed to send review request to Make.com.");
+        }
+    } catch (err) {
+        console.error("Webhook Error:", err);
+        alert("Error connecting to webhook.");
+    }
+}
+	
 async function saveJobAssignment() {
     const jobId = document.getElementById('assignJobId').value;
     const cleanerName = document.getElementById('assignCleanerSelect').value;
@@ -1431,6 +1470,7 @@ function populateAssignCleanerSelect() {
         <div class="modal-actions" style="margin-top: 25px;">
             <button class="primary-btn btn-full" onclick="saveJobAssignment()">Save Assignment</button>
             <button type="button" class="primary-btn btn-full" style="background: #3b82f6; margin-left: 10px;" onclick="notifyCleaner()">Notify Cleaner</button>
+			<button type="button" class="primary-btn btn-full" style="background: #8b5cf6; margin-left: 10px;" onclick="completeJob()">Job Complete</button>
             <button class="nav-icon-btn" style="width:40px;" onclick="closeAssignmentModal()">✕</button>
         </div>
     </div>
@@ -1439,6 +1479,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
 
 
 
