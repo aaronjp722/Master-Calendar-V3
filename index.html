@@ -1006,16 +1006,16 @@ if (priceEl) {
     badge.style.background = isAssigned ? 'var(--primary)' : 'var(--danger)';
     badge.style.color = 'black';
 
-    // Handle Cleaner Selection
-    const select = document.getElementById('assignCleanerSelect');
-    const warning = document.getElementById('conflictWarning');
-    warning.style.display = 'none';
+   // 1. First, populate the list so options exist
+    populateAssignCleanerSelect();
 
     if (isAssigned) {
         const first = assignments[0];
+        // Correctly lookup the staff name via the ID map
         const staff = window.staffById[first.cleaner_id];
-select.value = staff ? staff.name : "";
-
+        
+        // This line now successfully finds the match in the newly populated list
+        if (staff) select.value = staff.name; 
         
         document.getElementById('payoutType').value = first.payout_type || 'PERCENT';
         document.getElementById('payoutValue').value = first.payout_value || '';
@@ -1220,17 +1220,17 @@ document.addEventListener('click', function(e) {
 function populateAssignCleanerSelect() {
     const select = document.getElementById('assignCleanerSelect');
     if (!select) return;
+    
+    // Reset dropdown and add default option
+    select.innerHTML = '<option value="">-- Select Cleaner --</option>';
 
-    select.innerHTML = '<option value="">-- Unassigned (Available) --</option>';
-
-    Object.values(window.staffById || {}).forEach(staff => {
+    // Surgically map names from the existing staff data
+    Object.keys(window.staffMap).forEach(name => {
         const opt = document.createElement('option');
-        opt.value = staff.name;
-        opt.textContent = staff.name;
+        opt.value = name;
+        opt.textContent = name;
         select.appendChild(opt);
     });
-
-    console.log("ASSIGN DROPDOWN POPULATED");
 }
 
 
@@ -1357,6 +1357,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init --->
+
 
 
 
