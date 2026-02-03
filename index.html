@@ -997,19 +997,14 @@ if (priceEl) {
     badge.style.background = isAssigned ? 'var(--primary)' : 'var(--danger)';
     badge.style.color = 'black';
 
-   // 1. Populate the list FIRST so the options exist in the DOM
-    populateAssignCleanerSelect(); 
+   // Ensure the list is populated first
+populateAssignCleanerSelect(); 
 
     const select = document.getElementById('assignCleanerSelect');
-    
-    // 2. Clear current selection state
-    select.value = "";
-    document.getElementById('payoutValue').value = '';
-
     if (isAssigned) {
         const assignment = assignments[0];
         
-        // Match the database cleaner_id to the name in our staffMap
+        // Strategy: Try to find the name in the staffMap using the ID
         let foundName = "";
         for (const [name, data] of Object.entries(window.staffMap || {})) {
             if (data.id === assignment.cleaner_id) {
@@ -1018,17 +1013,23 @@ if (priceEl) {
             }
         }
 
-        // 3. Set the value now that options are definitely there
+        // If found, set it. This works even if the dropdown just finished loading.
         if (foundName) {
             select.value = foundName;
         }
         
         document.getElementById('payoutType').value = assignment.payout_type || 'PERCENT';
         document.getElementById('payoutValue').value = assignment.payout_value || '';
+    } else {
+        select.value = "";
     }
 
-    // Show the modal
+    // This part was missing and is why the page won't load
+	populateAssignCleanerSelect();
+
     document.getElementById('jobAssignmentModal').style.display = 'flex';
+}
+
 
 
 async function notifyCleaner() {
@@ -1220,11 +1221,9 @@ function populateAssignCleanerSelect() {
     const select = document.getElementById('assignCleanerSelect');
     if (!select) return;
 
-    // Clear existing to prevent double-populating
     select.innerHTML = '<option value="">-- Select Cleaner --</option>';
 
-    // Pull from the working staffMap used in your sidebar
-    Object.keys(window.staffMap || {}).forEach(name => {
+    Object.keys(window.staffMap).forEach(name => {
         const opt = document.createElement('option');
         opt.value = name;
         opt.textContent = name;
@@ -1357,8 +1356,6 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
-
-
 
 
 
