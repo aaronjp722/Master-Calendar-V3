@@ -778,6 +778,20 @@ pill.style.zIndex = "10";
             pill.style.background = '#000';
             pill.style.border = `1px solid ${isAssigned ? 'var(--primary)' : 'var(--danger)'}`;
             pill.style.borderLeft = `4px solid ${isAssigned ? 'var(--primary)' : 'var(--danger)'}`;
+			 // --- PURPLE OVERRIDE for Completed Jobs ---
+            if (job.status === 'COMPLETE') {
+                pill.style.background = '#5b21b6'; // Solid Purple Background
+                pill.style.borderColor = '#8b5cf6'; // Lighter Purple Border
+                pill.style.borderLeftColor = '#8b5cf6';
+                
+                // Optional: Update the "X CLN" badge to look purple too
+                const badge = pill.querySelector('.pill-loc');
+                if (badge) {
+                    badge.style.background = '#8b5cf6';
+                    badge.style.color = 'white';
+                    badge.innerText = "DONE";
+                }
+            }
 
             pill.innerHTML = `
                 <span class="pill-time" style="color:white; font-weight:800;">JOB</span>
@@ -1219,6 +1233,18 @@ async function completeJob() {
         return;
     }
 
+// 1. Mark as Complete in Database
+    const { error } = await window.adminSupabase
+        .from('jobs')
+        .update({ status: 'COMPLETE' })
+        .eq('job_id', jobId);
+
+    if (error) {
+        console.error("Status Update Error:", error);
+        alert("Failed to update job status.");
+        return;
+    }
+	
     const payload = {
         job_id: jobId,
         first_name: firstName,
@@ -1237,6 +1263,8 @@ async function completeJob() {
 
         if (response.ok) {
             alert("Job marked complete! Review request sent.");
+			document.getElementById('jobAssignmentModal').style.display = 'none';
+        await loadData();
         } else {
             alert("Failed to send review request to Make.com.");
         }
@@ -1479,6 +1507,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
 
 
 
