@@ -1006,22 +1006,24 @@ if (priceEl) {
     badge.style.background = isAssigned ? 'var(--primary)' : 'var(--danger)';
     badge.style.color = 'black';
 
-   // 1. First, populate the list so options exist
+   // Ensure the list is populated first
     populateAssignCleanerSelect();
 
+    const select = document.getElementById('assignCleanerSelect');
     if (isAssigned) {
         const first = assignments[0];
-        // Correctly lookup the staff name via the ID map
+        // Use the ID to find the staff name in your map
         const staff = window.staffById[first.cleaner_id];
         
-        // This line now successfully finds the match in the newly populated list
-        if (staff) select.value = staff.name; 
+        // Match the dropdown selection to the assigned name
+        if (staff && staff.name) {
+            select.value = staff.name;
+        }
         
         document.getElementById('payoutType').value = first.payout_type || 'PERCENT';
         document.getElementById('payoutValue').value = first.payout_value || '';
     } else {
         select.value = "";
-        document.getElementById('payoutValue').value = '';
     }
 
     // This part was missing and is why the page won't load
@@ -1220,15 +1222,15 @@ document.addEventListener('click', function(e) {
 function populateAssignCleanerSelect() {
     const select = document.getElementById('assignCleanerSelect');
     if (!select) return;
-    
-    // Reset dropdown and add default option
+
+    // Reset and add the placeholder
     select.innerHTML = '<option value="">-- Select Cleaner --</option>';
 
-    // Surgically map names from the existing staff data
-    Object.keys(window.staffMap).forEach(name => {
+    // Loop through staff records and add names to the dropdown
+    Object.values(window.staffById || {}).forEach(staff => {
         const opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name;
+        opt.value = staff.name;
+        opt.textContent = staff.name;
         select.appendChild(opt);
     });
 }
@@ -1357,6 +1359,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init --->
+
 
 
 
