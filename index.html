@@ -1300,10 +1300,10 @@ async function saveJobAssignment() {
             last_name: document.getElementById('editJobLastName').value,
             service_area: document.getElementById('editJobArea').value,
             email: document.getElementById('editJobEmail').value,
-            phone: phoneVal,
+            phone: document.getElementById('editJobPhone').value, // Matches your code
             address: document.getElementById('editJobAddress').value,
             city: document.getElementById('editJobCity').value,
-            zip_code: document.getElementById('editJobZip').value,
+            zip: document.getElementById('editJobZip').value,    // Changed from zip_code to zip
             notes: document.getElementById('editJobNotes').value,
             duration_hours: parseFloat(document.getElementById('editJobDuration').value) || 0,
             total_man_hours: parseFloat(document.getElementById('editJobManHours').value) || 0,
@@ -1521,3 +1521,4 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
