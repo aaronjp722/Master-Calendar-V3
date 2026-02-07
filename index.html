@@ -1305,8 +1305,8 @@ async function saveJobAssignment() {
             city: document.getElementById('editJobCity').value,
             zip: document.getElementById('editJobZip').value,    // Changed from zip_code to zip
             notes: document.getElementById('editJobNotes').value,
-            duration_hours: parseFloat(document.getElementById('editJobDuration').value) || 0,
-            total_man_hours: parseFloat(document.getElementById('editJobManHours').value) || 0,
+          duration_hours: parseFloat(document.getElementById('editJobDuration').value) || 0,
+          total_man_hours: parseFloat(document.getElementById('editJobManHours').value) || 0,
             scheduled_start: originalJob.scheduled_start.split('T')[0] + 'T' + document.getElementById('editJobTime').value + ':00'
         })
         .eq('job_id', jobId)
@@ -1521,5 +1521,6 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
 
 
