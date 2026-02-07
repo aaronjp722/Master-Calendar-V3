@@ -1282,53 +1282,49 @@ console.log("MATCH IN window.allJobs:", real);
 	
 async function saveJobAssignment() {
     const jobId = document.getElementById('assignJobId').value;
+    const phoneVal = document.getElementById('editJobPhone').value;
     const cleanerName = document.getElementById('assignCleanerSelect').value;
     const pType = document.getElementById('payoutType').value;
     const pValue = document.getElementById('payoutValue').value;
-    
-    // Get the new editable values from the modal
-    const newArea = document.getElementById('editJobArea').value;
-    const newTime = document.getElementById('editJobTime').value;
-
-    if (!jobId || !cleanerName || !pValue) {
-        alert("Please select a cleaner and payout amount.");
-        return;
-    }
-
     const cleanerId = window.staffMap[cleanerName]?.id;
     const originalJob = window.allJobs.find(j => j.job_id === jobId);
 
-    // 1. Update the 'jobs' table with all details
+    console.log("DEBUG: Sending update for Job ID:", jobId);
+    console.log("DEBUG: Phone value to save:", phoneVal);
+
+    // 1. Update the 'jobs' table
     const { data: updatedJob, error: jobError } = await window.adminSupabase
-    .from('jobs')
-    .update({
-        first_name: document.getElementById('editJobFirstName').value,
-        last_name: document.getElementById('editJobLastName').value,
-        service_area: document.getElementById('editJobArea').value,
-        email: document.getElementById('editJobEmail').value,
-        phone: document.getElementById('editJobPhone').value,
-        address: document.getElementById('editJobAddress').value,
-        city: document.getElementById('editJobCity').value,
-        zip_code: document.getElementById('editJobZip').value,
-        notes: document.getElementById('editJobNotes').value,
-        duration_hours: parseFloat(document.getElementById('editJobDuration').value) || 0,
-        total_man_hours: parseFloat(document.getElementById('editJobManHours').value) || 0,
-        scheduled_start:
-            originalJob.scheduled_start.split('T')[0] +
-            'T' +
-            document.getElementById('editJobTime').value +
-            ':00'
-    })
-    .eq('job_id', jobId)
-    .select();   // ← forces Supabase to return updated row
+        .from('jobs')
+        .update({
+            first_name: document.getElementById('editJobFirstName').value,
+            last_name: document.getElementById('editJobLastName').value,
+            service_area: document.getElementById('editJobArea').value,
+            email: document.getElementById('editJobEmail').value,
+            phone: phoneVal,
+            address: document.getElementById('editJobAddress').value,
+            city: document.getElementById('editJobCity').value,
+            zip_code: document.getElementById('editJobZip').value,
+            notes: document.getElementById('editJobNotes').value,
+            duration_hours: parseFloat(document.getElementById('editJobDuration').value) || 0,
+            total_man_hours: parseFloat(document.getElementById('editJobManHours').value) || 0,
+            scheduled_start: originalJob.scheduled_start.split('T')[0] + 'T' + document.getElementById('editJobTime').value + ':00'
+        })
+        .eq('job_id', jobId)
+        .select();
 
-	console.log("UPDATED JOB RESPONSE:", updatedJob);
-console.log("UPDATED JOB RESPONSE:", updatedJob);
-console.log("JOB UPDATE ERROR:", jobError);
-alert(JSON.stringify({ updatedJob, jobError }));
+    if (jobError) {
+        console.error("JOB UPDATE ERROR:", jobError.message);
+        alert("Error updating job: " + jobError.message);
+        return;
+    }
 
+    if (!updatedJob || updatedJob.length === 0) {
+        console.warn("WARNING: No rows were updated. Check if job_id exists in the 'jobs' table.");
+        alert("Update failed: No matching job found in database.");
+        return;
+    }
 
-
+    console.log("SUCCESS! Updated Job:", updatedJob[0]);
 
     // 2. Update/Insert the 'job_assignments' table
     const { error: assignError } = await window.adminSupabase
@@ -1340,16 +1336,16 @@ alert(JSON.stringify({ updatedJob, jobError }));
             payout_value: parseFloat(pValue)
         }, { onConflict: 'job_id' });
 
-    if (jobError || assignError) {
-        console.error("Save Error:", jobError || assignError);
-        alert("Failed to save changes.");
+    if (assignError) {
+        console.error("Assignment Save Error:", assignError);
+        alert("Job updated, but assignment failed.");
         return;
     }
 
     document.getElementById('jobAssignmentModal').style.display = 'none';
     await loadData(); // Refresh the calendar grid
 }
-
+	
 document.addEventListener('click', function(e) {
     if (e.target && e.target.id === 'addMoreCleanersBtn') {
         const container = document.getElementById('cleanerAssignmentContainer');
@@ -1525,3 +1521,4 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
