@@ -991,7 +991,7 @@ function openJobAssignmentModal(job) {
     document.getElementById('editJobPhone').value = job.phone || '';
     document.getElementById('editJobAddress').value = job.address || '';
     document.getElementById('editJobCity').value = job.city || '';
-    document.getElementById('editJobZip').value = job.zip_code || '';
+    document.getElementById('editJobZip').value = job.zip || '';
     document.getElementById('editJobNotes').value = job.notes || '';
     document.getElementById('editJobDuration').value = job.duration_hours || '';
     document.getElementById('editJobManHours').value = job.total_man_hours || '';
@@ -1521,4 +1521,5 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
 
