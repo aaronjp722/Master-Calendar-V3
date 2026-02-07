@@ -1281,25 +1281,18 @@ console.log("MATCH IN window.allJobs:", real);
 
 	
 async function saveJobAssignment() {
-    // 1. Capture all the values
     const jobId = document.getElementById('assignJobId').value;
     const phoneVal = document.getElementById('editJobPhone').value;
     const cleanerName = document.getElementById('assignCleanerSelect').value;
     const pType = document.getElementById('payoutType').value;
     const pValue = document.getElementById('payoutValue').value;
-    
-    // 2. DIAGNOSTIC ALERT: This will show you the ID and Phone before saving
-    alert(`DIAGNOSTIC CHECK:\nJob ID: ${jobId}\nPhone: ${phoneVal}\nCleaner: ${cleanerName}`);
-
     const cleanerId = window.staffMap[cleanerName]?.id;
     const originalJob = window.allJobs.find(j => j.job_id === jobId);
 
-    if (!jobId) {
-        alert("CRITICAL ERROR: No Job ID found. Update cannot proceed.");
-        return;
-    }
+    console.log("DEBUG: Sending update for Job ID:", jobId);
+    console.log("DEBUG: Phone value to save:", phoneVal);
 
-    // 3. Perform the update
+    // 1. Update the 'jobs' table
     const { data: updatedJob, error: jobError } = await window.adminSupabase
         .from('jobs')
         .update({
@@ -1307,7 +1300,7 @@ async function saveJobAssignment() {
             last_name: document.getElementById('editJobLastName').value,
             service_area: document.getElementById('editJobArea').value,
             email: document.getElementById('editJobEmail').value,
-            phone: phoneVal, // This is what we are verifying
+            phone: phoneVal,
             address: document.getElementById('editJobAddress').value,
             city: document.getElementById('editJobCity').value,
             zip_code: document.getElementById('editJobZip').value,
@@ -1320,28 +1313,37 @@ async function saveJobAssignment() {
         .select();
 
     if (jobError) {
-        console.error("SUPABASE ERROR:", jobError.message);
-        alert("Database Error: " + jobError.message);
+        console.error("JOB UPDATE ERROR:", jobError.message);
+        alert("Error updating job: " + jobError.message);
         return;
     }
 
-    // 4. Final Verification
     if (!updatedJob || updatedJob.length === 0) {
-        alert("WARNING: The database accepted the request but 0 rows were changed. This usually means the Job ID does not match anything in the 'jobs' table.");
+        console.warn("WARNING: No rows were updated. Check if job_id exists in the 'jobs' table.");
+        alert("Update failed: No matching job found in database.");
         return;
     }
 
-    // 5. Assignment Logic
-    await window.adminSupabase.from('job_assignments').upsert({
-        job_id: jobId,
-        cleaner_id: cleanerId,
-        payout_type: pType,
-        payout_value: parseFloat(pValue)
-    }, { onConflict: 'job_id' });
+    console.log("SUCCESS! Updated Job:", updatedJob[0]);
+
+    // 2. Update/Insert the 'job_assignments' table
+    const { error: assignError } = await window.adminSupabase
+        .from('job_assignments')
+        .upsert({
+            job_id: jobId,
+            cleaner_id: cleanerId,
+            payout_type: pType,
+            payout_value: parseFloat(pValue)
+        }, { onConflict: 'job_id' });
+
+    if (assignError) {
+        console.error("Assignment Save Error:", assignError);
+        alert("Job updated, but assignment failed.");
+        return;
+    }
 
     document.getElementById('jobAssignmentModal').style.display = 'none';
-    await loadData();
-    alert("Save Successful!");
+    await loadData(); // Refresh the calendar grid
 }
 	
 document.addEventListener('click', function(e) {
@@ -1519,5 +1521,3 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
-
-
