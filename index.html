@@ -1281,19 +1281,22 @@ console.log("MATCH IN window.allJobs:", real);
 
 	
 async function saveJobAssignment() {
-    const jobId = document.getElementById('assignJobId').value;
-    const cleanerName = document.getElementById('assignCleanerSelect').value;
-    const pType = document.getElementById('payoutType').value;
-    const pValue = document.getElementById('payoutValue').value;
-    
-    // Get the new editable values from the modal
-    const newArea = document.getElementById('editJobArea').value;
-    const newTime = document.getElementById('editJobTime').value;
 
-    if (!jobId || !cleanerName || !pValue) {
-        alert("Please select a cleaner and payout amount.");
-        return;
-    }
+    const jobIdFromInput = document.getElementById('assignJobId').value;
+    const jobIdFromMemory = window.currentEditingJob?.job_id;
+
+    console.log("JOB ID FROM INPUT:", jobIdFromInput);
+    console.log("JOB ID FROM MEMORY:", jobIdFromMemory);
+    console.log("ALL JOB IDS IN MEMORY:", (window.allJobs || []).map(j => j.job_id));
+
+    alert(JSON.stringify({
+        jobIdFromInput,
+        jobIdFromMemory
+    }));
+
+    return; // ⬅️ STOP EXECUTION HERE FOR TEST
+}
+
 
     const cleanerId = window.staffMap[cleanerName]?.id;
     const originalJob = window.allJobs.find(j => j.job_id === jobId);
@@ -1525,6 +1528,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
 
 
 
