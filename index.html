@@ -1317,7 +1317,10 @@ async function saveJobAssignment() {
     .select();   // ← forces Supabase to return updated row
 
 	console.log("UPDATED JOB RESPONSE:", updatedJob);
+console.log("UPDATED JOB RESPONSE:", updatedJob);
 console.log("JOB UPDATE ERROR:", jobError);
+alert(JSON.stringify({ updatedJob, jobError }));
+
 
 
 
@@ -1516,6 +1519,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
 
 
 
