@@ -700,8 +700,10 @@ const jobStatusFilter = document.getElementById('filterJobStatus').value;
         `;
         
         col.querySelector('.day-col-body').onclick = (e) => {
-            if(e.target === e.currentTarget) openModal(null, dateKey);
-        };
+    if (e.target === e.currentTarget) {
+        openJobAssignmentModal(null, dateKey);
+    }
+};
 
         grid.appendChild(col);
         const container = col.querySelector('.day-col-body');
@@ -976,6 +978,36 @@ function closeDetailModal() {
 
 // --- JOB ASSIGNMENT & CONFLICT LOGIC ---
 function openJobAssignmentModal(job) {
+	if (!job) {
+    // NEW JOB MODE
+
+    document.getElementById('assignJobId').value = crypto.randomUUID();
+
+    document.getElementById('editJobFirstName').value = '';
+    document.getElementById('editJobLastName').value = '';
+    document.getElementById('editJobEmail').value = '';
+    document.getElementById('editJobPhone').value = '';
+    document.getElementById('editJobAddress').value = '';
+    document.getElementById('editJobCity').value = '';
+    document.getElementById('editJobZip').value = '';
+    document.getElementById('editJobNotes').value = '';
+    document.getElementById('editJobDuration').value = '';
+    document.getElementById('editJobManHours').value = '';
+    document.getElementById('assignJobPrice').value = '';
+
+    if (dateKey) {
+        document.getElementById('editJobTime').value = "09:00";
+        window.newJobDate = dateKey;
+    }
+
+    document.getElementById('jobStatusBadge').innerText = "NEW";
+    document.getElementById('jobStatusBadge').style.background = "var(--primary)";
+    document.getElementById('jobStatusBadge').style.color = "black";
+
+    document.getElementById('jobAssignmentModal').style.display = 'flex';
+    return;
+}
+
     const modal = document.getElementById('jobAssignmentModal');
     const assignJobIdEl = document.getElementById('assignJobId');
 
@@ -1305,38 +1337,66 @@ async function saveJobAssignment() {
     console.log("DEBUG: Sending update for Job ID:", jobId);
     console.log("DEBUG: Phone value to save:", phoneVal);
 
-    // 1. Update the 'jobs' table
-    const { data: updatedJob, error: jobError } = await window.adminSupabase
+   const isNewJob = !window.allJobs.find(j => j.job_id === jobId);
+
+if (isNewJob) {
+
+    const { error } = await window.adminSupabase
+        .from('jobs')
+        .insert({
+            job_id: jobId,
+            first_name: document.getElementById('editJobFirstName').value,
+            last_name: document.getElementById('editJobLastName').value,
+            service_area: document.getElementById('editJobArea').value,
+            email: document.getElementById('editJobEmail').value,
+            phone: document.getElementById('editJobPhone').value,
+            address: document.getElementById('editJobAddress').value,
+            city: document.getElementById('editJobCity').value,
+            zip: document.getElementById('editJobZip').value,
+            notes: document.getElementById('editJobNotes').value,
+            duration_hours: parseFloat(document.getElementById('editJobDuration').value) || 0,
+            total_man_hours: parseFloat(document.getElementById('editJobManHours').value) || 0,
+            price: parseFloat(document.getElementById('assignJobPrice').value) || 0,
+            scheduled_start: window.newJobDate + 'T' + document.getElementById('editJobTime').value + ':00',
+            status: 'PENDING'
+        });
+
+    if (error) {
+        alert("Error creating job.");
+        console.error(error);
+        return;
+    }
+
+} else {
+
+    const originalJob = window.allJobs.find(j => j.job_id === jobId);
+
+    const { error } = await window.adminSupabase
         .from('jobs')
         .update({
             first_name: document.getElementById('editJobFirstName').value,
             last_name: document.getElementById('editJobLastName').value,
             service_area: document.getElementById('editJobArea').value,
             email: document.getElementById('editJobEmail').value,
-            phone: document.getElementById('editJobPhone').value, // Matches your code
+            phone: document.getElementById('editJobPhone').value,
             address: document.getElementById('editJobAddress').value,
             city: document.getElementById('editJobCity').value,
-            zip: document.getElementById('editJobZip').value,    // Changed from zip_code to zip
+            zip: document.getElementById('editJobZip').value,
             notes: document.getElementById('editJobNotes').value,
-          duration_hours: parseFloat(document.getElementById('editJobDuration').value) || 0,
-          total_man_hours: parseFloat(document.getElementById('editJobManHours').value) || 0,
-			price: parseFloat(document.getElementById('assignJobPrice').value) || 0,
+            duration_hours: parseFloat(document.getElementById('editJobDuration').value) || 0,
+            total_man_hours: parseFloat(document.getElementById('editJobManHours').value) || 0,
+            price: parseFloat(document.getElementById('assignJobPrice').value) || 0,
             scheduled_start: originalJob.scheduled_start.split('T')[0] + 'T' + document.getElementById('editJobTime').value + ':00'
         })
-        .eq('job_id', jobId)
-        .select();
+        .eq('job_id', jobId);
 
-    if (jobError) {
-        console.error("JOB UPDATE ERROR:", jobError.message);
-        alert("Error updating job: " + jobError.message);
+    if (error) {
+        alert("Error updating job.");
+        console.error(error);
         return;
     }
+}
 
-    if (!updatedJob || updatedJob.length === 0) {
-        console.warn("WARNING: No rows were updated. Check if job_id exists in the 'jobs' table.");
-        alert("Update failed: No matching job found in database.");
-        return;
-    }
 
     console.log("SUCCESS! Updated Job:", updatedJob[0]);
 
@@ -1542,6 +1602,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
 
 
 
