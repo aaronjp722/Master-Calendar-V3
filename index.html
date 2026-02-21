@@ -937,9 +937,21 @@ function openDetailModal(shift) {
     // Fill data
     document.getElementById('viewCleaner').innerText = shift.user_name;
     document.getElementById('viewCleaner').style.color = meta.color;
-    document.getElementById('viewDate').innerText = new Date(shift.date).toLocaleDateString('en-US', { 
-        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' 
+    const parts = shift.date.split('-');
+const safeDate = new Date(
+    parseInt(parts[0]),       // year
+    parseInt(parts[1]) - 1,   // month (0-indexed)
+    parseInt(parts[2])        // day
+);
+
+document.getElementById('viewDate').innerText =
+    safeDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
     });
+
     document.getElementById('viewTime').innerText = `${formatTime(shift.start_time)} to ${formatTime(shift.end_time)}`;
     
     const area = shift.service_area || "Not Assigned";
@@ -1521,6 +1533,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
 
 
 
