@@ -1328,7 +1328,7 @@ async function saveJobAssignment() {
     const pType = document.getElementById('payoutType').value;
     const pValue = document.getElementById('payoutValue').value;
     const cleanerId = window.staffMap[cleanerName]?.id;
-    const originalJob = window.allJobs.find(j => j.job_id === jobId);
+    
 
     console.log("DEBUG: Sending update for Job ID:", jobId);
     console.log("DEBUG: Phone value to save:", phoneVal);
@@ -1393,8 +1393,8 @@ if (isNewJob) {
     }
 }
 
+console.log("SUCCESS! Job saved:", jobId);
 
-    console.log("SUCCESS! Updated Job:", updatedJob[0]);
 
     // 2. Update/Insert the 'job_assignments' table
     const { error: assignError } = await window.adminSupabase
@@ -1598,6 +1598,7 @@ function populateAssignCleanerSelect() {
 </html>
 
 <!-- fresh pages init -->
+
 
 
 
